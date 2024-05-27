@@ -8,14 +8,16 @@ from aws_cdk import aws_iam as iam
 class RednalliaStack(core.Stack):
     def __init__(self, scope: core.Construct, id: str, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
-
+        
+        account_id = core.Stack.of(self).account
+        
         # VPC
         vpc = ec2.Vpc(self, "RednalliaVPC",
                       max_azs=3,
                       nat_gateways=1)
 
         # S3 Bucket
-        bucket = s3.Bucket(self, "rednallia-data-bucket",
+        bucket = s3.Bucket(self, f"rednallia-data-{account_id}",
                            versioned=True,
                            block_public_access=s3.BlockPublicAccess.BLOCK_ALL)
 
@@ -30,7 +32,7 @@ class RednalliaStack(core.Stack):
         # RDS PostgreSQL Database
         db_instance = rds.DatabaseInstance(self, "RednalliaRDS",
                                            engine=rds.DatabaseInstanceEngine.postgres(
-                                               version=rds.PostgresEngineVersion.VER_12_5),
+                                               version=rds.PostgresEngineVersion.VER_14_2),
                                            instance_type=ec2.InstanceType.of(
                                                ec2.InstanceClass.BURSTABLE2, ec2.InstanceSize.MICRO),
                                            vpc=vpc,
@@ -44,7 +46,7 @@ class RednalliaStack(core.Stack):
 
         # Lambda Function
         lambda_function = _lambda.Function(self, "RednalliaLambda",
-                                           runtime=_lambda.Runtime.PYTHON_3_8,
+                                           runtime=_lambda.Runtime.PYTHON_3_10,
                                            handler="lambda_function.handler",
                                            code=_lambda.Code.from_asset("lambda"),
                                            vpc=vpc,
@@ -61,7 +63,3 @@ class RednalliaStack(core.Stack):
         # Grant permissions
         bucket.grant_read_write(lambda_function)
         db_instance.grant_connect(lambda_function)
-
-app = core.App()
-RednalliaStack(app, "RednalliaStack")
-app.synth()
