@@ -3,7 +3,7 @@ from aws_cdk import aws_s3 as s3
 from aws_cdk import aws_rds as rds
 from aws_cdk import aws_lambda as _lambda
 from aws_cdk import aws_ec2 as ec2
-from aws_cdk import aws_iam as iam
+import os
 
 class RednalliaStack(core.Stack):
     def __init__(self, scope: core.Construct, id: str, **kwargs) -> None:
@@ -43,13 +43,18 @@ class RednalliaStack(core.Stack):
                                            database_name="rednallia_db",
                                            removal_policy=core.RemovalPolicy.DESTROY,
                                            deletion_protection=False)
-
+        # Lambda Layer
+        layer = _lambda.LayerVersion(self, "PandasPsycopg2Layer",
+                                     entry=os.path.join(os.path.dirname(__file__), "lamdba/layer"),
+                                     compatible_runtimes=[_lambda.Runtime.PYTHON_3_10],
+                                     description="Pandas and psycopg2-binary packages")
         # Lambda Function
         lambda_function = _lambda.Function(self, "RednalliaLambda",
                                            runtime=_lambda.Runtime.PYTHON_3_10,
                                            handler="lambda_function.handler",
                                            code=_lambda.Code.from_asset("lambda"),
                                            vpc=vpc,
+                                           layers=[layer],
                                            security_groups=[rds_security_group],
                                            environment={
                                                'BUCKET': bucket.bucket_name,
