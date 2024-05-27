@@ -1,0 +1,5 @@
+CustomerID,Name,Address,Phone,Email
+1001,John Doe,123 Elm St,555-1234,john@example.com
+1002,Jane Smith,456 Oak St,555-5678,jane@example.com
+1003,Alice Johnson,789 Pine St,555-8765,alice@example.com
+1004,Bob Brown,321 Maple St,555-4321,bob@example.com
