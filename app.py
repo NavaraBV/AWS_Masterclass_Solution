@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
-import os
-
 import aws_cdk as cdk
+from aws_cdk import core
 
 from aws_masterclass_solution.RednalliaStack import RednalliaStack
 
-app = cdk.App()
+app = core.App()
 RednalliaStack(app, "RednalliaStack",
     # If you don't specify 'env', this stack will be environment-agnostic.
     # Account/Region-dependent features and context lookups will not work,

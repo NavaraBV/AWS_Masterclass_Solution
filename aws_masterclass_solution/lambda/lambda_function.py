@@ -3,6 +3,29 @@ import boto3
 import os
 import psycopg2
 import pandas as pd
+from botocore.exceptions import ClientError
+
+def get_secret(secret_name):
+    region_name = "eu-west-1"
+
+    # Create a Secrets Manager client
+    session = boto3.session.Session()
+    client = session.client(
+        service_name='secretsmanager',
+        region_name=region_name
+    )
+
+    try:
+        get_secret_value_response = client.get_secret_value(
+            SecretId=secret_name
+        )
+    except ClientError as e:
+        # For a list of exceptions thrown, see
+        # https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
+        raise e
+
+    secret = get_secret_value_response['SecretString']
+    return secret['username'], secret['password']
 
 def handler(event, context):
     # Connect to S3
@@ -63,11 +86,12 @@ def handler(event, context):
             'body': json.dumps('Invalid file name')
         }
     
+    username, password = get_secret(os.environ['SECRET'])
     # Connect to PostgreSQL
     conn = psycopg2.connect(
         dbname=os.environ['DB_NAME'],
-        user=os.environ['DB_USER'],
-        password=os.environ['DB_PASSWORD'],
+        user=username,
+        password=password,
         host=os.environ['DB_HOST'],
         port=os.environ['DB_PORT']
     )
